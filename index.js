@@ -2,9 +2,26 @@ let phoneData = require("./data/phone-data");
 const express = require("express");
 const generateId = require("./utils/utils");
 const app = express();
+var morgan = require('morgan')
 
 //using json parser
 app.use(express.json())
+
+//using morgan middleware
+//predefined Morgan config
+// app.use(morgan('tiny'));
+
+//custom morgan config with logging HTTP post requests.
+app.use(morgan(function(tokens,req,res){
+    return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms',
+        JSON.stringify(req.body)
+      ].join(' ')
+}));
 
 app.get('/api/persons', (req, res) => {
     res.send(phoneData);
