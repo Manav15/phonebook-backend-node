@@ -1,11 +1,16 @@
 let phoneData = require("./data/phone-data");
 const express = require("express");
 const generateId = require("./utils/utils");
+const cors =  require('cors');
+
 const app = express();
-var morgan = require('morgan')
+var morgan = require('morgan');
+
+//Adding cors
+app.use(cors);
 
 //using json parser
-app.use(express.json())
+app.use(express.json());
 
 //using morgan middleware
 //predefined Morgan config
@@ -89,7 +94,7 @@ app.post('/api/persons',(req,res) => {
     res.end()
 });
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`App is running on Port ${PORT}`)
 })
