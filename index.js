@@ -7,7 +7,7 @@ const app = express();
 var morgan = require('morgan');
 
 //Adding cors
-app.use(cors);
+app.use(cors());
 
 //using json parser
 app.use(express.json());
