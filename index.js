@@ -54,7 +54,7 @@ app.get('/api/persons/:id', (req, res) => {
     res.end();
 });
 
-app.delete('/api/remove/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id);
     const removedPerson = phoneData.find((person) => person.id === id);
     if (!removedPerson) {
