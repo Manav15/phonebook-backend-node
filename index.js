@@ -6,6 +6,9 @@ const cors =  require('cors');
 const app = express();
 var morgan = require('morgan');
 
+//for static UI rendering
+app.use(express.static('dist'))
+
 //Adding cors
 app.use(cors());
 
