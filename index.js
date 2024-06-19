@@ -1,10 +1,13 @@
-let phoneData = require("./data/phone-data");
 const express = require("express");
 const generateId = require("./utils/utils");
-const cors =  require('cors');
-
-const app = express();
+const cors = require('cors');
+var phoneData = require("./data/phone-data");
 var morgan = require('morgan');
+const mongoose = require('mongoose')
+const app = express();
+
+const password = process.argv[2];
+const url = `mongodb+srv://fullstack:${password}@cluster0.b2klxqw.mongodb.net/phonebook?retryWrites=true&w=majority&appName=Cluster0`;
 
 //for static UI rendering
 app.use(express.static('dist'))
@@ -20,7 +23,7 @@ app.use(express.json());
 // app.use(morgan('tiny'));
 
 //custom morgan config with logging HTTP post requests.
-app.use(morgan(function(tokens,req,res){
+app.use(morgan(function (tokens, req, res) {
     return [
         tokens.method(req, res),
         tokens.url(req, res),
@@ -28,12 +31,36 @@ app.use(morgan(function(tokens,req,res){
         tokens.res(req, res, 'content-length'), '-',
         tokens['response-time'](req, res), 'ms',
         JSON.stringify(req.body)
-      ].join(' ')
+    ].join(' ')
 }));
 
+mongoose.set('strictQuery', false)
+mongoose.connect(url);
+
+const phonebookSchema = new mongoose.Schema({
+    name: String,
+    number: String
+});
+
+phonebookSchema.set(
+    'toJSON', {
+        transform: (doc,returnedObject) => {
+            returnedObject.id = returnedObject._id.toString()
+            delete returnedObject._id
+            delete returnedObject._v
+        }
+    }
+);
+
+const PhoneAddress = mongoose.model('PhoneAddress', phonebookSchema);
+
 app.get('/api/persons', (req, res) => {
-    res.send(phoneData);
-    res.end()
+    PhoneAddress.find({})
+        .then(person => {
+            res.json(person)
+        })
+    // res.send(phoneData);
+    // res.end()
 });
 
 app.get('/api/info', (req, res) => {
@@ -68,22 +95,22 @@ app.delete('/api/persons/:id', (req, res) => {
     res.end();
 });
 
-app.post('/api/persons',(req,res) => {
+app.post('/api/persons', (req, res) => {
     const inputReq = req.body;
-  
-    const nameAlreadyExist = phoneData.find((person) =>  person.name.toLowerCase() === inputReq.name.toLowerCase());
 
-    if(!inputReq.name && !inputReq.number) {
+    const nameAlreadyExist = phoneData.find((person) => person.name.toLowerCase() === inputReq.name.toLowerCase());
+
+    if (!inputReq.name && !inputReq.number) {
         return res.status(400).send("Bad Request")
-    } 
-    
-    if(!inputReq.name || !inputReq.number) {
-        const errorMsg = !inputReq.name ? "name is missing" : "number is missing"
-        return res.status(400).json({error: errorMsg}).end()
-    } 
+    }
 
-    if(nameAlreadyExist) {
-        return res.status(400).json({error: "name must be unique"})
+    if (!inputReq.name || !inputReq.number) {
+        const errorMsg = !inputReq.name ? "name is missing" : "number is missing"
+        return res.status(400).json({ error: errorMsg }).end()
+    }
+
+    if (nameAlreadyExist) {
+        return res.status(400).json({ error: "name must be unique" })
     }
 
     const person = {
