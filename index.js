@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const generateId = require("./utils/utils");
 const cors = require('cors');
@@ -6,8 +7,7 @@ var morgan = require('morgan');
 const mongoose = require('mongoose')
 const app = express();
 
-const password = process.argv[2];
-const url = `mongodb+srv://fullstack:${password}@cluster0.b2klxqw.mongodb.net/phonebook?retryWrites=true&w=majority&appName=Cluster0`;
+const PhoneAddress = require('./models/phonebook');
 
 //for static UI rendering
 app.use(express.static('dist'))
@@ -34,33 +34,12 @@ app.use(morgan(function (tokens, req, res) {
     ].join(' ')
 }));
 
-mongoose.set('strictQuery', false)
-mongoose.connect(url);
-
-const phonebookSchema = new mongoose.Schema({
-    name: String,
-    number: String
-});
-
-phonebookSchema.set(
-    'toJSON', {
-        transform: (doc,returnedObject) => {
-            returnedObject.id = returnedObject._id.toString()
-            delete returnedObject._id
-            delete returnedObject._v
-        }
-    }
-);
-
-const PhoneAddress = mongoose.model('PhoneAddress', phonebookSchema);
-
+//api modified to get data from DB
 app.get('/api/persons', (req, res) => {
     PhoneAddress.find({})
         .then(person => {
             res.json(person)
         })
-    // res.send(phoneData);
-    // res.end()
 });
 
 app.get('/api/info', (req, res) => {
@@ -124,7 +103,7 @@ app.post('/api/persons', (req, res) => {
     res.end()
 });
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`App is running on Port ${PORT}`)
 })
