@@ -68,13 +68,26 @@ app.get('/api/persons/:id', (req, res) => {
 
 app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id);
-    const removedPerson = phoneData.find((person) => person.id === id);
-    if (!removedPerson) {
-        return res.status(400).json({ error: "Person doesn't exist" }).end()
-    }
-    phoneData = phoneData.filter((person) => person.id !== id)
-    res.send(`Person with id : ${removedPerson.id} Removed`);
-    res.end();
+    PhoneAddress.deleteOne({id: id})
+    .then((deleted) => {
+        console.log('deleted',deleted)
+        res.status(200).send(`Person with id : ${id} Removed`).end()})
+    .catch((err) =>  next(err));
+});
+
+app.put('/api/persons/:id',(req,res) => {
+    const id= req.params.id;
+    const body  = req.body;
+
+    const updatedObj = {
+        id: req.params.id,
+        name: body.name,
+        number: body.number
+    };
+
+    PhoneAddress.findOneAndUpdate({id: id},updatedObj)
+    .then((result) => res.status(200).json(result).end())
+    .catch((err) => next(err))
 });
 
 app.post('/api/persons', (req, res) => {
