@@ -15,13 +15,13 @@ mongoose.connect(url)
     });
 
 const phonebookSchema = new mongoose.Schema({
+    id: Number,
     name: String,
     number: String,
 });
 
 phonebookSchema.set('toJSON', {
     transform: (doc, returnedObject) => {
-        returnedObject.id =  returnedObject._id.toString()
         delete returnedObject._id
         delete returnedObject._v
     }

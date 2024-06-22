@@ -50,17 +50,20 @@ app.get('/api/info', (req, res) => {
 });
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const output = phoneData.find((person) => person.id === id);
-    if (!output) {
-        res.statusMessage = "Person doesn't exist";
-        return res.status(400)
-            .json({
-                error: "Person Not Found"
-            }).end()
-    }
-    res.send(output);
-    res.end();
+    const id = req.params.id
+    PhoneAddress.find({ id: id })
+        .then((data) => {
+            if (data) {
+                res.json(data);
+            } else {
+                res.status(400).json({
+                    error: "Person Not Found"
+                }).end()
+            }
+        }).catch((err) => {
+            console.log('error:', err)
+            res.status(500).end()
+        })
 });
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -77,31 +80,40 @@ app.delete('/api/persons/:id', (req, res) => {
 app.post('/api/persons', (req, res) => {
     const inputReq = req.body;
 
-    const nameAlreadyExist = phoneData.find((person) => person.name.toLowerCase() === inputReq.name.toLowerCase());
+    if (inputReq === undefined) {
+        return res.status(400).json({ error: 'content missing' })
+    };
 
-    if (!inputReq.name && !inputReq.number) {
-        return res.status(400).send("Bad Request")
-    }
-
-    if (!inputReq.name || !inputReq.number) {
-        const errorMsg = !inputReq.name ? "name is missing" : "number is missing"
-        return res.status(400).json({ error: errorMsg }).end()
-    }
-
-    if (nameAlreadyExist) {
-        return res.status(400).json({ error: "name must be unique" })
-    }
-
-    const person = {
+    const person = new PhoneAddress({
         id: generateId(phoneData),
         name: inputReq.name,
         number: inputReq.number
+    });
+
+    person.save().then((data) => res.json(data))
+        .catch((error) => console.log('Error:', error))
+});
+
+//unknown endpoint middleware
+const unknownEndpoint = (req,res) => {
+    res.status(404).send({error: 'Unknown Endpoint'})
+}
+
+app.use(unknownEndpoint);
+
+//Defining error handler middleware
+const errorHandler = (error, req, res, next) => {
+    console.log(error.message)
+
+    if (error.name === "CastError") {
+        return response.status(400).send({ error: "malformed id" })
     }
 
-    phoneData = phoneData.concat(person);
-    res.json(person)
-    res.end()
-});
+    next(error)
+};
+
+//Using error handler Middleware should be done at the end after all requests / routes and after all middlewares
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
